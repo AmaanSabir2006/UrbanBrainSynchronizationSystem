@@ -152,3 +152,15 @@ class PasswordResetOTP(models.Model):
 
     def __str__(self):
         return f"OTP for {self.user.username} - {self.otp_code}"
+    
+class RefillLogs(models.Model):
+    refill_id = models.AutoField(primary_key=True)
+    resource = models.ForeignKey('Resources', models.DO_NOTHING, db_column='resource_id')
+    refill_date = models.DateTimeField(auto_now_add=True)
+    refill_amount = models.FloatField()
+    refill_cost = models.DecimalField(max_digits=12, decimal_places=2, db_column='refill_cost')
+    operator_notes = models.TextField(blank=True, null=True)
+
+    class Meta:
+        managed = False  # Tells Django to rely on the existing Postgres schema
+        db_table = 'refill_logs'

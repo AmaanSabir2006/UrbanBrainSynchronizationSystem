@@ -1,10 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
 
-/* Complete layout reset */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+:root {
+  --bg-page: #F8FAFC;         /* Soft slate off-white for the main background */
+  --bg-panel: #FFFFFF;        /* Pure white for panels, cards, sidebar, navbar */
+  --text-main: #0F172A;       /* High-contrast dark slate for headings/text */
+  --text-muted: #64748B;      /* Medium slate for secondary labels */
+  --brand-green: #01411C;     /* Lahore Brand Green */
+  --brand-gold: #D97706;      /* Warning Gold */
+  --brand-red: #EF4444;       /* Danger Red */
+  
+  --border-light: rgba(1, 65, 28, 0.08);
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.02), 0 2px 6px rgba(0, 0, 0, 0.01);
+  --shadow-card-hover: 0 12px 30px rgba(1, 65, 28, 0.06), 0 4px 10px rgba(1, 65, 28, 0.02);
+  
+  --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 html, body, #root {
@@ -12,23 +28,39 @@ html, body, #root {
   height: 100%;
   max-width: 100vw;
   max-height: 100vh;
-  background-color: #0B0F19;
-  color: #F3F4F6;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  overflow: hidden; /* Stops the outer browser window from ever scrolling */
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  overflow: hidden;
 }
 
-/* Custom Tactical Scrollbar for inner dashboard elements */
+/* Premium Light Dashboard Card */
+.urbs-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.urbs-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(1, 65, 28, 0.18);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0B0F19;
+  background: var(--bg-page);
 }
 ::-webkit-scrollbar-thumb {
-  background: #1F2937;
+  background: rgba(1, 65, 28, 0.15);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #374151;
+  background: var(--brand-green);
 }

@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-function Dashboard() {
+function Dashboard({ onSelectZone }) {
   const [zones, setZones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Queries only the zones table for optimal performance
     axios
       .get("http://127.0.0.1:8000/api/zones/")
       .then((response) => {
@@ -15,109 +16,145 @@ function Dashboard() {
       })
       .catch((error) => {
         console.error("API Fetch Error: ", error);
-        setError("Failed to synchronize with PostgreSQL matrix.");
+        setError("Failed to synchronize with PostgreSQL database.");
         setLoading(false);
       });
   }, []);
 
-  // Updated badge states for pristine readability against a light white dashboard background
   const getRiskStyles = (risk) => {
     switch (risk?.toLowerCase()) {
       case "high":
-        return { color: "#D32F2F", bg: "rgba(211, 47, 47, 0.06)", border: "rgba(211, 47, 47, 0.3)" };
+        return { color: "#EF4444", bg: "rgba(239, 68, 68, 0.06)", border: "rgba(239, 68, 68, 0.2)" };
       case "medium":
-        return { color: "#D97706", bg: "rgba(217, 119, 6, 0.06)", border: "rgba(217, 119, 6, 0.3)" };
+        return { color: "#D97706", bg: "rgba(217, 119, 6, 0.06)", border: "rgba(217, 119, 6, 0.2)" };
       default:
-        return { color: "#01411C", bg: "rgba(1, 65, 28, 0.06)", border: "rgba(1, 65, 28, 0.3)" };
+        return { color: "#10B981", bg: "rgba(16, 185, 129, 0.06)", border: "rgba(16, 185, 129, 0.2)" };
     }
   };
 
+  // Compute stats dynamically from the zones payload
+  const totalPopulation = zones.reduce((acc, zone) => acc + (zone.population_count || 0), 0);
+  const criticalZonesCount = zones.filter(z => z.risk_classification?.toLowerCase() === "high").length;
+
   if (loading) {
-    return <div style={{ color: "#01411C", fontSize: "16px", fontWeight: "600", fontFamily: "monospace" }}>▶ Synchronizing urban data infrastructure...</div>;
+    return <div style={{ color: "#01411C", fontSize: "14px", fontWeight: "600", fontFamily: "var(--font-mono)", padding: "40px" }}>▶ Synchronizing sector matrices...</div>;
   }
 
   if (error) {
-    return <div style={{ color: "#D32F2F", fontSize: "16px", fontWeight: "600", fontFamily: "monospace" }}>{error}</div>;
+    return <div style={{ color: "#EF4444", fontSize: "14px", fontWeight: "600", fontFamily: "var(--font-mono)", padding: "40px" }}>{error}</div>;
   }
 
   return (
     <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
-      <div style={{ marginBottom: "40px" }}>
-        {/* Changed text color from white to high-contrast deep green */}
-        <h1 style={{ fontSize: "32px", fontWeight: "800", margin: "0 0 8px 0", letterSpacing: "-0.5px", color: "#01411C" }}>
-          Zones Management Overview
-        </h1>
-        <p style={{ color: "rgba(1, 65, 28, 0.65)", margin: 0, fontSize: "15px", fontWeight: "500" }}>
-          Real-time relational database records pulling from the PostgreSQL core.
-        </p>
+      
+      {/* Page Header */}
+      <div style={{ marginBottom: "35px", display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+        <div>
+          <h1 style={{ fontSize: "28px", fontWeight: "800", color: "#01411C", letterSpacing: "-0.5px", margin: "0 0 6px 0" }}>
+            Zones Management Overview
+          </h1>
+          <p style={{ color: "#64748B", margin: 0, fontSize: "14px", fontWeight: "500" }}>
+            Real-time telemetry matrices pulling live from PostgreSQL database.
+          </p>
+        </div>
+        <div style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "#10B981", padding: "6px 12px", borderRadius: "4px", background: "rgba(16, 185, 129, 0.06)", border: "1px solid rgba(16, 185, 129, 0.15)", fontWeight: "700" }}>
+          SYSTEM: ONLINE
+        </div>
       </div>
 
-      {/* Top Statistical Summary Panels */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "25px", marginBottom: "40px" }}>
-        {/* Card 1: Monitored Regions */}
-        <div style={{ backgroundColor: "#FFFFFF", padding: "24px", borderRadius: "12px", border: "2px solid #01411C", boxShadow: "0 4px 20px rgba(1, 65, 28, 0.03)" }}>
-          <div style={{ color: "rgba(1, 65, 28, 0.6)", fontSize: "11px", fontWeight: "700", marginBottom: "8px", letterSpacing: "1px" }}>MONITORED REGIONS</div>
-          <div style={{ fontSize: "36px", fontWeight: "800", color: "#01411C" }}>{zones.length}</div>
-        </div>
+      {/* Summary Stat Cards (3 Columns) */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px", marginBottom: "35px" }}>
         
-        {/* Card 2: Critical Outages */}
-        <div style={{ backgroundColor: "#FFFFFF", padding: "24px", borderRadius: "12px", border: "2px solid #01411C", boxShadow: "0 4px 20px rgba(1, 65, 28, 0.03)" }}>
-          <div style={{ color: "rgba(1, 65, 28, 0.6)", fontSize: "11px", fontWeight: "700", marginBottom: "8px", letterSpacing: "1px" }}>CRITICAL OUTAGES</div>
-          <div style={{ fontSize: "36px", fontWeight: "800", color: "#D32F2F" }}>
-            {zones.filter(z => z.risk_classification?.toLowerCase() === "high").length}
-          </div>
+        {/* Card 1: Monitored Regions */}
+        <div className="urbs-card" style={{ padding: "24px", display: "flex", flexDirection: "column", borderLeft: "4px solid #01411C" }}>
+          <span style={{ color: "#64748B", fontSize: "11px", fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase" }}>MONITORED REGIONS</span>
+          <span style={{ fontSize: "36px", fontWeight: "800", color: "#01411C", marginTop: "6px" }}>
+            {zones.length}
+          </span>
+        </div>
+
+        {/* Card 2: Total Protected Population */}
+        <div className="urbs-card" style={{ padding: "24px", display: "flex", flexDirection: "column", borderLeft: "4px solid #06B6D4" }}>
+          <span style={{ color: "#64748B", fontSize: "11px", fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase" }}>TOTAL POPULATION PROTECTED</span>
+          <span style={{ fontSize: "36px", fontWeight: "800", color: "#06B6D4", marginTop: "6px" }}>
+            {totalPopulation.toLocaleString()}
+          </span>
+        </div>
+
+        {/* Card 3: High Risk Zones */}
+        <div className="urbs-card" style={{ padding: "24px", display: "flex", flexDirection: "column", borderLeft: "4px solid #EF4444" }}>
+          <span style={{ color: "#64748B", fontSize: "11px", fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase" }}>CRITICAL CRISIS ZONES</span>
+          <span style={{ fontSize: "36px", fontWeight: "800", color: "#EF4444", marginTop: "6px" }}>
+            {criticalZonesCount}
+          </span>
         </div>
       </div>
 
+      {/* Regions Grid */}
       {zones.length === 0 ? (
-        <div style={{ padding: "40px", border: "2px dashed rgba(1, 65, 28, 0.3)", borderRadius: "12px", textAlign: "center", color: "rgba(1, 65, 28, 0.6)", backgroundColor: "#FFFFFF", fontWeight: "500" }}>
-          No zone data detected in the current query.
+        <div style={{ padding: "50px", border: "1px dashed rgba(1,65,28,0.2)", borderRadius: "12px", textAlign: "center", color: "#64748B" }}>
+          No zone records detected in target query.
         </div>
       ) : (
-        /* Regional Matrix Grid Section */
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "25px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "20px" }}>
           {zones.map((zone) => {
-            const status = getRiskStyles(zone.risk_classification);
+            const stat = getRiskStyles(zone.risk_classification);
             return (
               <div
                 key={zone.zone_id}
+                className="urbs-card"
+                onClick={() => onSelectZone(zone)}
                 style={{
-                  backgroundColor: "#FFFFFF", // Changed from solid black to crisp white
-                  border: `2px solid ${status.color}`, // Upgraded line width for structured look
-                  borderRadius: "12px",
                   padding: "24px",
-                  boxShadow: "0 10px 25px -5px rgba(1, 65, 28, 0.04)",
                   display: "flex",
                   flexDirection: "column",
                   position: "relative",
-                  overflow: "hidden"
+                  overflow: "hidden",
+                  cursor: "pointer"
                 }}
               >
-                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "4px", backgroundColor: status.color }} />
+                {/* Thin top colored bar indicator */}
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "4px", backgroundColor: stat.color }} />
                 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
                   <div>
-                    <span style={{ color: "rgba(1, 65, 28, 0.5)", fontSize: "12px", fontWeight: "700", fontFamily: "monospace" }}>{zone.zone_id}</span>
-                    <h2 style={{ fontSize: "20px", fontWeight: "700", margin: "4px 0 0 0", color: "#01411C" }}>{zone.zone_name}</h2>
+                    <span style={{ color: "#64748B", fontSize: "11px", fontWeight: "700", fontFamily: "var(--font-mono)" }}>
+                      {zone.zone_id}
+                    </span>
+                    <h2 style={{ fontSize: "19px", fontWeight: "700", margin: "4px 0 0 0", color: "#01411C" }}>
+                      {zone.zone_name}
+                    </h2>
                   </div>
                   <span style={{
                     padding: "4px 10px",
                     borderRadius: "6px",
                     fontSize: "11px",
                     fontWeight: "800",
-                    textTransform: "uppercase",
-                    color: status.color,
-                    backgroundColor: status.bg,
-                    border: `1px solid ${status.border}`
+                    letterSpacing: "0.3px",
+                    color: stat.color,
+                    backgroundColor: stat.bg,
+                    border: `1px solid ${stat.border}`
                   }}>
-                    {zone.risk_classification || "UNKNOWN"}
+                    {zone.risk_classification || "STABLE"}
                   </span>
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px", borderTop: "1px solid rgba(1, 65, 28, 0.15)", paddingTop: "16px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px" }}>
-                    <span style={{ color: "rgba(1, 65, 28, 0.65)", fontWeight: "500" }}>Resident Population</span>
-                    <span style={{ fontWeight: "700", color: "#01411C" }}>{Number(zone.population_count || 0).toLocaleString()}</span>
+                <div style={{ borderTop: "1px solid rgba(1, 65, 28, 0.08)", paddingTop: "18px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                    <span style={{ color: "#64748B", fontWeight: "500" }}>Resident Population</span>
+                    <span style={{ fontWeight: "700", color: "#0F172A" }}>
+                      {Number(zone.population_count || 0).toLocaleString()}
+                    </span>
+                  </div>
+
+                  {/* Population Density Bar Visual */}
+                  <div style={{ height: "6px", background: "#E2E8F0", borderRadius: "3px", overflow: "hidden", marginTop: "4px" }}>
+                    <div style={{
+                      height: "100%",
+                      width: `${Math.min((zone.population_count || 0) / 500000 * 100, 100)}%`,
+                      background: `linear-gradient(90deg, ${stat.color}, #10B981)`,
+                      borderRadius: "3px"
+                    }} />
                   </div>
                 </div>
               </div>

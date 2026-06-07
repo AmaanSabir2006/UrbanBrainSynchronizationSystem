@@ -5,12 +5,13 @@ import AdminAuth from "./pages/AdminAuth";
 import Dashboard from "./pages/Dashboard";
 import ResourceForecast from "./pages/ResourceForecast";
 import DisasterImpact from "./pages/DisasterImpact";
-import FuelSimulation from "./pages/FuelSimulation";
+import EvacuationPlans from "./pages/EvacuationPlans";
 import BudgetAllocation from "./pages/BudgetAllocation";
 import TransitMap from "./pages/TransitMap";
 import AssetDependencyGraph from "./pages/AssetDependencyGraph";
-// Maintained your specific filename spelling (Dasboard) to prevent build failures
 import MacroUrbanDashboard from "./pages/MacroUrbanDasboard"; 
+import ZoneDetails from "./pages/ZoneDetails"; 
+import TelemetryConsole from "./pages/TelemetryConsole";
 
 function App() {
   // 1. Session Gatekeeper State
@@ -19,6 +20,7 @@ function App() {
   });
 
   const [currentView, setCurrentView] = useState("zones");
+  const [selectedZone, setSelectedZone] = useState(null);
 
   // 2. Authentication Callback Methods
   const handleLoginSuccess = () => {
@@ -43,7 +45,7 @@ function App() {
       flexDirection: "column", 
       width: "100vw", 
       height: "100vh", 
-      backgroundColor: "#FFFFFF", 
+      backgroundColor: "#F8FAFC", 
       overflow: "hidden"
     }}>
       <Navbar onLogout={handleLogout} />
@@ -65,21 +67,32 @@ function App() {
           padding: "40px", 
           overflowY: "auto", 
           height: "100%",
-          backgroundColor: "#FFFFFF" 
+          backgroundColor: "#F8FAFC" 
         }}>
-          {currentView === "zones" && <Dashboard />}
+          {currentView === "zones" && (
+            <Dashboard 
+              onSelectZone={(zoneObj) => {
+                setSelectedZone(zoneObj);
+                setCurrentView("zone-details");
+              }} 
+            />
+          )}
+          
+          {currentView === "zone-details" && (
+            <ZoneDetails 
+              zone={selectedZone} 
+              onBack={() => setCurrentView("zones")} 
+            />
+          )}
+
           {currentView === "resources" && <ResourceForecast />}
           {currentView === "disasters" && <DisasterImpact />}
-          
-          {/* ⛽ Fuel Cascade Simulator Option */}
-          {currentView === "simulation" && <FuelSimulation />}
-          
-          {/* 🏢 Macro-Urban Operational Risk Grid Option */}
+          {currentView === "evacuation" && <EvacuationPlans />}
+          {currentView === "telemetry" && <TelemetryConsole/>}
           {currentView === "zone-impact" && <MacroUrbanDashboard />}
-          
-          {currentView === "allocation" && <BudgetAllocation/>}
-          {currentView === "map" && <TransitMap/>}
-          {currentView === "assets-graph" && <AssetDependencyGraph/>}
+          {currentView === "allocation" && <BudgetAllocation />}
+          {currentView === "map" && <TransitMap />}
+          {currentView === "assets-graph" && <AssetDependencyGraph />}
         </div>
       </div>
     </div>

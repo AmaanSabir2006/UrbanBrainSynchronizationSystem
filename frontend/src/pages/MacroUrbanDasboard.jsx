@@ -136,49 +136,431 @@ export default function MacroUrbanDashboard() {
     );
   }) || [];
 
+  // Helper for risk status styling
+  const getRiskBadgeStyles = (riskClass) => {
+    const formatClass = String(riskClass || '').toUpperCase();
+    if (formatClass.includes('HIGH')) {
+      return { border: "1px solid rgba(239, 68, 68, 0.25)", color: "#EF4444", bg: "rgba(239, 68, 68, 0.05)" };
+    } else if (formatClass.includes('MEDIUM') || formatClass.includes('MODERATE')) {
+      return { border: "1px solid rgba(245, 158, 11, 0.25)", color: "#F59E0B", bg: "rgba(245, 158, 11, 0.05)" };
+    } else {
+      return { border: "1px solid rgba(16, 185, 129, 0.25)", color: "#10B981", bg: "rgba(16, 185, 129, 0.05)" };
+    }
+  };
+
   return (
     <div className="urban-dashboard-wrapper">
       <style>{`
-        .urban-dashboard-wrapper { display: flex; flex-direction: column; height: 100%; width: 100%; background-color: #FFFFFF; color: #1f2937; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; box-sizing: border-box; position: relative; }
-        .dashboard-control-panel { display: flex; gap: 16px; background-color: #f9fafb; padding: 20px; border-radius: 8px; border: 1px solid rgba(1, 65, 28, 0.12); align-items: center; z-index: 100; }
-        .dropdown-control-group { display: flex; gap: 12px; flex-grow: 1; }
-        .dropdown-wrapper { display: flex; flex-direction: column; flex: 1; gap: 6px; }
-        .dropdown-label { font-size: 11px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: 0.05em; }
-        .urban-select-dropdown { width: 100%; padding: 10px 14px; background-color: #ffffff; border: 1px solid #d1d5db; border-radius: 6px; color: #111827; font-size: 14px; font-weight: 500; box-sizing: border-box; outline: none; transition: all 0.2s ease; height: 42px; }
-        .urban-select-dropdown:focus { border-color: #01411C; box-shadow: 0 0 0 3px rgba(1, 65, 28, 0.1); }
-        .control-btn { padding: 0 28px; font-size: 13px; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; height: 42px; display: flex; align-items: center; justify-content: center; margin-top: 17px; }
-        .action-stop-btn { background-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
-        .action-stop-btn.armed { background-color: #ef4444; color: #ffffff; cursor: pointer; }
-        .action-stop-btn.armed:hover { background-color: #dc2626; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2); }
-        .action-reset-btn { background-color: #ffffff; color: #374151; border: 1px solid #d1d5db; }
-        .action-reset-btn:hover { background-color: #f9fafb; border-color: #01411C; color: #01411C; }
-        .urban-grid-canvas { margin-top: 32px; flex-grow: 1; }
-        .canvas-header h2 { font-size: 22px; color: #111827; margin: 0 0 4px 0; font-weight: 700; }
-        .canvas-header p { font-size: 14px; color: #6b7280; margin: 0 0 24px 0; }
-        .macro-zones-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
-        .zone-grid-tile { background-color: #ffffff; border-radius: 8px; padding: 20px; border: 1px solid rgba(1, 65, 28, 0.12); transition: all 0.2s ease; }
-        .tile-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .zone-code-tag { font-size: 11px; background-color: #f3f4f6; padding: 2px 6px; border-radius: 4px; color: #4b5563; font-family: monospace; font-weight: 600; }
-        .zone-display-title { font-size: 16px; color: #111827; margin: 0 0 6px 0; font-weight: 600; }
-        .status-label { font-size: 12px; margin: 0; font-weight: 500; }
-        .TILE-STEADY-STATE { border-left: 4px solid #10b981; }
-        .TILE-STEADY-STATE .status-label { color: #059669; }
-        .TILE-ALERT-CRITICAL { border-left: 4px solid #ef4444; background-color: #fef2f2; border-color: #fca5a5; cursor: pointer; animation: criticalPulse 2s infinite ease-in-out; }
-        .TILE-ALERT-CRITICAL:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(239, 68, 68, 0.12); }
-        .TILE-ALERT-CRITICAL .status-label { color: #dc2626; font-weight: 700; }
-        .live-alert-dot { width: 8px; height: 8px; background-color: #ef4444; border-radius: 50%; }
-        .backend-error-banner { background-color: #fffaf0; border: 1px dashed #dd6b20; color: #dd6b20; padding: 12px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; margin-bottom: 20px; }
-        .diagnostic-drawer-panel { position: absolute; top: 0; right: 0; width: 420px; height: 100%; background-color: #ffffff; border-left: 1px solid #e5e7eb; box-shadow: -12px 0 30px rgba(0, 0, 0, 0.05); padding: 28px 24px; box-sizing: border-box; z-index: 200; display: flex; flex-direction: column; }
-        .drawer-header-wrapper { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #f3f4f6; padding-bottom: 16px; }
-        .drawer-header-wrapper h2 { font-size: 18px; color: #111827; margin: 0 0 4px 0; font-weight: 700; }
-        .drawer-sub { font-size: 12px; color: #059669; margin: 0; font-weight: 600; }
-        .close-drawer-icon { background: none; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; line-height: 20px; }
-        .close-drawer-icon:hover { color: #111827; }
-        .drawer-scroll-body { flex-grow: 1; overflow-y: auto; margin-top: 20px; }
-        .drawer-infrastructure-section h3 { font-size: 12px; color: #4b5563; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px 0; font-weight: 700; }
-        .outage-nodes-list { display: flex; flex-direction: column; gap: 10px; }
-        .infrastructure-outage-card { display: flex; align-items: center; gap: 12px; background-color: #fff5f5; padding: 12px; border-radius: 6px; border: 1px solid #fee2e2; }
-        @keyframes criticalPulse { 0% { background-color: #fef2f2; } 50% { background-color: #fee2e2; } 100% { background-color: #fef2f2; } }
+        .urban-dashboard-wrapper {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          width: 100%;
+          background-color: #F8FAFC;
+          color: #0F172A;
+          font-family: Inter, system-ui, -apple-system, sans-serif;
+          box-sizing: border-box;
+          position: relative;
+        }
+        
+        .dashboard-control-panel {
+          display: flex;
+          gap: 20px;
+          background-color: #FFFFFF;
+          padding: 24px;
+          border-radius: 12px;
+          border: 1px solid rgba(1, 65, 28, 0.08);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+          align-items: flex-end;
+          margin-bottom: 30px;
+        }
+
+        .dropdown-control-group {
+          display: flex;
+          gap: 16px;
+          flex-grow: 1;
+        }
+
+        .dropdown-wrapper {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          gap: 8px;
+        }
+
+        .dropdown-label {
+          font-size: 11px;
+          font-weight: 700;
+          color: #64748B;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        }
+
+        .urban-select-dropdown {
+          width: 100%;
+          padding: 10px 14px;
+          background-color: #FFFFFF;
+          border: 1px solid #E2E8F0;
+          border-radius: 8px;
+          color: #0F172A;
+          font-size: 13.5px;
+          font-weight: 600;
+          box-sizing: border-box;
+          outline: none;
+          transition: all 0.15s ease-in-out;
+          height: 42px;
+        }
+
+        .urban-select-dropdown:focus {
+          border-color: #01411C;
+          box-shadow: 0 0 0 3px rgba(1, 65, 28, 0.06);
+        }
+
+        .control-btn {
+          padding: 0 24px;
+          font-size: 12.5px;
+          font-weight: 700;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.15s ease-in-out;
+          white-space: nowrap;
+          height: 42px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-sizing: border-box;
+        }
+
+        .action-stop-btn {
+          background-color: #E2E8F0;
+          color: #94A3B8;
+          border: none;
+          cursor: not-allowed;
+        }
+
+        .action-stop-btn.armed {
+          background-color: #EF4444;
+          color: #FFFFFF;
+          cursor: pointer;
+        }
+
+        .action-stop-btn.armed:hover {
+          background-color: #DC2626;
+          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+        }
+
+        .action-reset-btn {
+          background-color: #FFFFFF;
+          color: #01411C;
+          border: 1px solid rgba(1, 65, 28, 0.2);
+        }
+
+        .action-reset-btn:hover {
+          background-color: rgba(1, 65, 28, 0.04);
+          border-color: #01411C;
+        }
+
+        .urban-grid-canvas {
+          flex-grow: 1;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .canvas-header {
+          margin-bottom: 24px;
+          border-bottom: 1px solid rgba(1, 65, 28, 0.08);
+          padding-bottom: 15px;
+        }
+
+        .canvas-header h2 {
+          font-size: 24px;
+          color: #01411C;
+          margin: 0 0 6px 0;
+          font-weight: 850;
+          letter-spacing: -0.5px;
+        }
+
+        .canvas-header p {
+          font-size: 13.5px;
+          color: #64748B;
+          margin: 0;
+        }
+
+        .macro-zones-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+          gap: 20px;
+        }
+
+        .zone-grid-tile {
+          background-color: #FFFFFF;
+          border-radius: 12px;
+          padding: 24px;
+          border: 1px solid rgba(1, 65, 28, 0.08);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.01);
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          box-sizing: border-box;
+        }
+
+        .zone-grid-tile:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
+          border-color: rgba(1, 65, 28, 0.2);
+        }
+
+        .tile-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .zone-code-tag {
+          font-size: 11px;
+          background-color: #F1F5F9;
+          padding: 3px 8px;
+          border-radius: 5px;
+          color: #475569;
+          font-family: var(--font-mono), monospace;
+          font-weight: 700;
+        }
+
+        .zone-risk-pill {
+          font-size: 9px;
+          font-weight: 800;
+          padding: 2px 7px;
+          border-radius: 10px;
+          text-transform: uppercase;
+        }
+
+        .zone-display-title {
+          font-size: 18px;
+          color: #0F172A;
+          margin: 4px 0 0 0;
+          font-weight: 700;
+          letter-spacing: -0.3px;
+        }
+
+        .zone-demographic-row {
+          font-size: 12px;
+          color: #64748B;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          border-top: 1px solid #F1F5F9;
+          padding-top: 10px;
+        }
+
+        .tile-status-indicator {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          margin-top: 6px;
+        }
+
+        .TILE-STEADY-STATE {
+          border-top: 4px solid #10B981;
+        }
+
+        .TILE-STEADY-STATE .tile-status-indicator {
+          color: #10B981;
+        }
+
+        .TILE-ALERT-CRITICAL {
+          border-top: 4px solid #EF4444;
+          background-color: #FFFDFD;
+          cursor: pointer;
+          animation: criticalPulse 2.5s infinite ease-in-out;
+        }
+
+        .TILE-ALERT-CRITICAL .tile-status-indicator {
+          color: #EF4444;
+        }
+
+        .live-alert-dot {
+          width: 8px;
+          height: 8px;
+          background-color: #EF4444;
+          border-radius: 50%;
+          box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+          animation: dotPulse 1.5s infinite;
+        }
+
+        .backend-error-banner {
+          background-color: #FFFBEB;
+          border: 1px dashed #D97706;
+          color: #D97706;
+          padding: 12px 18px;
+          border-radius: 8px;
+          font-size: 13.5px;
+          font-weight: 600;
+          margin-bottom: 25px;
+        }
+
+        /* Backdrop overlay and Slide-in Panel Drawer */
+        .drawer-backdrop {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(15, 23, 42, 0.15);
+          backdrop-filter: blur(4px);
+          z-index: 150;
+          animation: fadeIn 0.2s ease-out;
+        }
+
+        .diagnostic-drawer-panel {
+          position: fixed;
+          top: 0;
+          right: 0;
+          width: 460px;
+          height: 100vh;
+          background-color: #FFFFFF;
+          box-shadow: -10px 0 30px rgba(0, 0, 0, 0.08);
+          padding: 30px;
+          box-sizing: border-box;
+          z-index: 200;
+          display: flex;
+          flex-direction: column;
+          animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .drawer-header-wrapper {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          border-bottom: 1px solid #F1F5F9;
+          padding-bottom: 20px;
+          margin-bottom: 20px;
+        }
+
+        .drawer-header-wrapper h2 {
+          font-size: 20px;
+          color: #01411C;
+          margin: 0 0 6px 0;
+          font-weight: 800;
+          letter-spacing: -0.5px;
+        }
+
+        .drawer-sub {
+          font-size: 11px;
+          color: #64748B;
+          margin: 0;
+          font-weight: 700;
+          text-transform: uppercase;
+        }
+
+        .close-drawer-icon {
+          background: #F1F5F9;
+          border: none;
+          color: #64748B;
+          font-size: 20px;
+          font-weight: 600;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.15s;
+        }
+
+        .close-drawer-icon:hover {
+          background-color: #E2E8F0;
+          color: #0F172A;
+        }
+
+        .drawer-scroll-body {
+          flex-grow: 1;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+        }
+
+        .drawer-stats-card {
+          background-color: #F8FAFC;
+          border-radius: 8px;
+          padding: 16px;
+          border: 1px solid #E2E8F0;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+
+        .stat-item {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .stat-label {
+          font-size: 10px;
+          font-weight: 700;
+          color: #64748B;
+          text-transform: uppercase;
+        }
+
+        .stat-value {
+          font-size: 15px;
+          font-weight: 700;
+          color: #0F172A;
+        }
+
+        .drawer-infrastructure-section h3 {
+          font-size: 11px;
+          color: #64748B;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          margin: 0 0 14px 0;
+          font-weight: 700;
+        }
+
+        .outage-nodes-list {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .infrastructure-outage-card {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          background-color: #FEF2F2;
+          padding: 14px;
+          border-radius: 8px;
+          border: 1px solid #FEE2E2;
+          box-shadow: 0 2px 6px rgba(239, 68, 68, 0.02);
+        }
+
+        @keyframes criticalPulse {
+          0% { background-color: #FFFFFF; }
+          50% { background-color: #FFF5F5; }
+          100% { background-color: #FFFFFF; }
+        }
+
+        @keyframes dotPulse {
+          0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+          70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        @keyframes slideIn {
+          from { transform: translateX(100%); }
+          to { transform: translateX(0); }
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
       `}</style>
       
       {backendError && (
@@ -190,7 +572,7 @@ export default function MacroUrbanDashboard() {
       <header className="dashboard-control-panel">
         <div className="dropdown-control-group">
           <div className="dropdown-wrapper">
-            <label className="dropdown-label">Asset Type Filter</label>
+            <label className="dropdown-label">Utility Sector Filter</label>
             <select className="urban-select-dropdown" value={selectedAssetType} onChange={(e) => { setSelectedAssetType(e.target.value); setSelectedAssetId(''); }}>
               <option value="ALL">All Utility Sectors</option>
               <option value="POWER_STATION">⚡ Power Generation Stations</option>
@@ -199,7 +581,7 @@ export default function MacroUrbanDashboard() {
             </select>
           </div>
           <div className="dropdown-wrapper">
-            <label className="dropdown-label">Select Infrastructure by Name</label>
+            <label className="dropdown-label">Select Infrastructure Node by Name</label>
             <select className="urban-select-dropdown" value={selectedAssetId} onChange={(e) => setSelectedAssetId(e.target.value)}>
               <option value="">-- Choose Infrastructure Name --</option>
               {displayedInfrastructures.map((infra) => (
@@ -217,61 +599,113 @@ export default function MacroUrbanDashboard() {
       <main className="urban-grid-canvas">
         <div className="canvas-header">
           <h2>Macro-Urban Operational Risk Grid</h2>
-          <p>Isolate an infrastructure structure by name above and click STOP. Affected grid sectors will flag red; click them to extract MongoDB diagnostic logs.</p>
+          <p>Isolate an infrastructure node above and click STOP. Affected grid sectors will flag red; click them to extract MongoDB diagnostic logs.</p>
         </div>
+        
         <div className="macro-zones-grid">
           {zones.map((zone) => {
-            // Support varying field formats coming from database entities (e.g., zone_id vs id)
             const zoneId = zone.zone_id || zone.id;
             const zoneName = zone.zone_name || zone.name || 'Unknown Grid Zone';
+            const riskClass = zone.risk_classification || 'Low';
+            const riskStyle = getRiskBadgeStyles(riskClass);
             
             const isCompromised = redZoneIds.includes(zoneId);
             const mongoSnapshot = impactTree.find((z) => z.zone_id === zoneId);
+            const assetsInZoneCount = allInfrastructures.filter(a => (a.zone_id || a.zone) === zoneId).length;
             
             return (
-              <div key={zoneId} className={`zone-grid-tile ${isCompromised ? 'TILE-ALERT-CRITICAL' : 'TILE-STEADY-STATE'}`} onClick={() => isCompromised && mongoSnapshot && setActiveZoneDetail(mongoSnapshot)}>
+              <div 
+                key={zoneId} 
+                className={`zone-grid-tile ${isCompromised ? 'TILE-ALERT-CRITICAL' : 'TILE-STEADY-STATE'}`} 
+                onClick={() => isCompromised && mongoSnapshot && setActiveZoneDetail({ ...mongoSnapshot, metadata: zone })}
+              >
                 <div className="tile-header">
                   <span className="zone-code-tag">{zoneId}</span>
-                  {isCompromised && <span className="live-alert-dot"></span>}
+                  {isCompromised ? (
+                    <span className="live-alert-dot"></span>
+                  ) : (
+                    <span className="zone-risk-pill" style={{
+                      backgroundColor: riskStyle.bg,
+                      color: riskStyle.color,
+                      border: riskStyle.border
+                    }}>{riskClass} Risk</span>
+                  )}
                 </div>
                 <h3 className="zone-display-title">{zoneName}</h3>
-                <p className="status-label">{isCompromised ? '⚠️ SYSTEM ISOLATION' : '🟢 OPERATIONAL'}</p>
+                
+                <div className="zone-demographic-row">
+                  <div>📏 Area: {zone.area_sqkm ? `${zone.area_sqkm} sqkm` : 'N/A'}</div>
+                  <div>👥 Population: {zone.population_count ? `${Number(zone.population_count).toLocaleString()} citizens` : 'N/A'}</div>
+                  <div>⚙️ Infrastructure: {assetsInZoneCount} nodes registered</div>
+                </div>
+
+                <p className="tile-status-indicator">
+                  {isCompromised ? '⚠️ System Isolation' : '● Operational'}
+                </p>
               </div>
             );
           })}
         </div>
       </main>
 
+      {/* Slide-In Diagnostics Drawer & Backdrop */}
       {activeZoneDetail && (
-        <aside className="diagnostic-drawer-panel">
-          <div className="drawer-header-wrapper">
-            <div>
-              <h2>{activeZoneDetail.zone_name} Diagnostics</h2>
-              <p className="drawer-sub">💾 MongoDB Real-Time Document Extraction Log</p>
+        <>
+          <div className="drawer-backdrop" onClick={() => setActiveZoneDetail(null)} />
+          <aside className="diagnostic-drawer-panel">
+            <div className="drawer-header-wrapper">
+              <div>
+                <h2>{activeZoneDetail.zone_name} Diagnostics</h2>
+                <p className="drawer-sub">💾 MongoDB Document Snapshot</p>
+              </div>
+              <button className="close-drawer-icon" onClick={() => setActiveZoneDetail(null)}>×</button>
             </div>
-            <button className="close-drawer-icon" onClick={() => setActiveZoneDetail(null)}>×</button>
-          </div>
 
-          <div className="drawer-scroll-body">
-            <div className="drawer-infrastructure-section">
-              <h3>Affected Downstream Consumers</h3>
-              <div className="outage-nodes-list">
-                {consumerImpactAssets.length > 0 ? (
-                  consumerImpactAssets.map((asset) => (
-                    <div key={asset.asset_id} className="infrastructure-outage-card">
-                      <div>
-                        <div style={{fontWeight: '700', fontSize: '13px'}}>{asset.name}</div>
-                        <div style={{fontSize: '11px', color: '#666', marginTop: '4px'}}>{asset.asset_id} • {asset.type}</div>
+            <div className="drawer-scroll-body">
+              {/* Demographic Information Cards */}
+              <div className="drawer-stats-card">
+                <div className="stat-item">
+                  <span className="stat-label">Zone ID</span>
+                  <span className="stat-value">{activeZoneDetail.zone_id}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">Risk Classification</span>
+                  <span className="stat-value" style={{ 
+                    color: getRiskBadgeStyles(activeZoneDetail.metadata?.risk_classification).color 
+                  }}>{activeZoneDetail.metadata?.risk_classification || 'Low'}</span>
+                </div>
+                <div className="stat-item" style={{ gridColumn: "span 2" }}>
+                  <span className="stat-label">Total Exposed Population</span>
+                  <span className="stat-value">{activeZoneDetail.metadata?.population_count ? `${Number(activeZoneDetail.metadata.population_count).toLocaleString()} citizens` : 'N/A'}</span>
+                </div>
+              </div>
+
+              {/* Infrastructure Outages List */}
+              <div className="drawer-infrastructure-section">
+                <h3>Impacted Downstream Services</h3>
+                <div className="outage-nodes-list">
+                  {consumerImpactAssets.length > 0 ? (
+                    consumerImpactAssets.map((asset) => (
+                      <div key={asset.asset_id} className="infrastructure-outage-card">
+                        <div style={{ fontSize: '20px' }}>🚨</div>
+                        <div>
+                          <div style={{ fontWeight: '700', fontSize: '13px', color: '#B91C1C' }}>{asset.name}</div>
+                          <div style={{ fontSize: '11px', color: '#7F1D1D', marginTop: '3px' }}>
+                            ID: {asset.asset_id} • Type: {asset.type}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))
-                ) : (
-                  <p style={{fontSize: '12px', color: '#666'}}>No downstream consumer nodes impacted.</p>
-                )}
+                    ))
+                  ) : (
+                    <p style={{ fontSize: '12.5px', color: '#64748B', fontStyle: 'italic' }}>
+                      No downstream consumer nodes impacted in this zone sector.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </aside>
+          </aside>
+        </>
       )}
     </div>
   );
